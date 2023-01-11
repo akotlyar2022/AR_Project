@@ -12,6 +12,9 @@ import ARKit
 class ViewController: UIViewController {
 
     @IBOutlet var sceneView: ARSCNView!
+    var session: ARSession {
+        return sceneView.session
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -19,9 +22,9 @@ class ViewController: UIViewController {
         // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
         sceneView.autoenablesDefaultLighting = true
+        sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints, ARSCNDebugOptions.showWorldOrigin]
         
         let scene = SCNScene()
-        createBox(in: scene)
         
         let gestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(boxTapped(touch:)))
         self.sceneView.addGestureRecognizer(gestureRecognizer)
@@ -112,8 +115,9 @@ class ViewController: UIViewController {
         boxMaterial.specular.contents = UIColor.yellow
         
         let boxNode = SCNNode(geometry: box)
+        boxNode.name = "box"
         boxNode.geometry?.materials = [boxMaterial]
-        boxNode.position = SCNVector3(0.0, 0.0, -1.0)
+        boxNode.position = SCNVector3(0.0, 0.0, -0.5)
         scene.rootNode.addChildNode(boxNode)
     }
     
@@ -133,5 +137,21 @@ class ViewController: UIViewController {
         
         // Pause the view's session
         sceneView.session.pause()
+    }
+    
+    @IBAction func resetTapped(sender: UIButton) {
+        session.pause()
+        sceneView.scene.rootNode.enumerateChildNodes { (node, _) in
+            if node.name == "box" {
+                node.removeFromParentNode()
+            }
+        }
+        
+        let configuration = ARWorldTrackingConfiguration()
+        session.run(configuration, options: [.removeExistingAnchors, .resetTracking])
+    }
+    
+    @IBAction func addTapped(sender: UIButton) {
+        createBox(in: sceneView.scene)
     }
 }
